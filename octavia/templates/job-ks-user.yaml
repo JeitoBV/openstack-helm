@@ -24,5 +24,8 @@ helm.sh/hook-weight: "-1"
 {{- if .Values.pod.tolerations.octavia.enabled -}}
 {{- $_ := set $ksUserJob "tolerationsEnabled" true -}}
 {{- end -}}
+{{- if .Values.secrets.tls.ca -}}
+{{- $_ := set $ksUserJob "tlsSecret" .Values.secrets.tls.ca -}}
+{{- end -}}
 {{ $ksUserJob | include "helm-toolkit.manifests.job_ks_user" }}
 {{- end }}
