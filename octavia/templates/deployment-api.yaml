@@ -96,6 +96,11 @@ spec:
 {{ tuple $envAll "octavia_api" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "octavia_api" "container" "octavia_api" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+{{- if .Values.secrets.tls.ca }}
+          env:
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/openstack-helm.crt"
+{{- end }}
           command:
             - uwsgi
             - --ini
@@ -135,11 +140,17 @@ spec:
               mountPath: /var/run/octavia
             - name: run-openvswitch
               mountPath: /var/run/ovn
+{{- dict "enabled" (not (empty .Values.secrets.tls.ca)) "name" .Values.secrets.tls.ca | include "helm-toolkit.snippets.tls_volume_mount" | indent 12 }}
 {{ if $mounts_octavia_api.volumeMounts }}{{ toYaml $mounts_octavia_api.volumeMounts | indent 12 }}{{ end }}
         - name: octavia-driver-agent
 {{ tuple $envAll "octavia_driver_agent" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.driver_agent | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
 {{ dict "envAll" $envAll "application" "octavia_driver_agent" "container" "octavia_driver_agent" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+{{- if .Values.secrets.tls.ca }}
+          env:
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/openstack-helm.crt"
+{{- end }}
           command:
             - octavia-driver-agent
             - --config-file
@@ -170,6 +181,7 @@ spec:
               mountPath: /var/run/octavia
             - name: run-openvswitch
               mountPath: /var/run/ovn
+{{- dict "enabled" (not (empty .Values.secrets.tls.ca)) "name" .Values.secrets.tls.ca | include "helm-toolkit.snippets.tls_volume_mount" | indent 12 }}
 {{ if $mounts_octavia_driver_agent.volumeMounts }}{{ toYaml $mounts_octavia_driver_agent.volumeMounts | indent 12 }}{{ end }}
       volumes:
         - name: pod-tmp
@@ -200,6 +212,7 @@ spec:
 {{- else }}
           emptyDir: {}
 {{ end }}
+{{- dict "enabled" (not (empty .Values.secrets.tls.ca)) "name" .Values.secrets.tls.ca | include "helm-toolkit.snippets.tls_volume" | indent 8 }}
 {{ if $mounts_octavia_api.volumes }}{{ toYaml $mounts_octavia_api.volumes | indent 8 }}{{ end }}
 {{- /*
 The driver agent sidecar mounts pod.mounts.octavia_driver_agent, so the
