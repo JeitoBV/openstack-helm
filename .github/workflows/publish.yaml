@@ -1,0 +1,70 @@
+name: Publish OpenStack Helm Charts
+
+on:
+  push:
+    branches:
+      - 2026.2-assortment-of-fixes
+    paths:
+      - "*/**"
+      - ".github/workflows/publish.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Package OpenStack Helm charts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p public
+          shopt -s nullglob
+
+          for chart in */Chart.yaml; do
+            chart_dir="${chart%/Chart.yaml}"
+
+            echo "Packaging ${chart_dir}"
+
+            helm package "${chart_dir}" \
+              --dependency-update \
+              --destination public \
+              --version 2026.2.0
+          done
+
+      - name: Generate repository index
+        run: |
+          helm repo index public \
+            --url https://jeitobv.github.io/openstack-helm
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
