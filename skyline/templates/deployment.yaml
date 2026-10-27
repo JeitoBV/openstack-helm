@@ -74,6 +74,7 @@ spec:
               readOnly: true
             - name: nginx-etc
               mountPath: /etc/nginx
+{{- dict "enabled" (not (empty .Values.secrets.tls.ca)) "name" .Values.secrets.tls.ca | include "helm-toolkit.snippets.tls_volume_mount" | indent 12 }}
 {{ if $mounts_skyline_init.volumeMounts }}{{ toYaml $mounts_skyline_init.volumeMounts | indent 12 }}{{ end }}
       containers:
         - name: nginx
