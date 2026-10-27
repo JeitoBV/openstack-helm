@@ -17,5 +17,8 @@ limitations under the License.
 {{- if .Values.manifests.certificates -}}
 {{- $_ := set $ksServiceJob "tlsSecret" .Values.secrets.tls.object_store.api.internal -}}
 {{- end -}}
+{{- if .Values.secrets.tls.ca -}}
+{{- $_ := set $ksServiceJob "tlsSecret" .Values.secrets.tls.ca -}}
+{{- end -}}
 {{ $ksServiceJob | include "helm-toolkit.manifests.job_ks_service" }}
 {{- end }}
